@@ -34,7 +34,7 @@ def speak(speechSequence: list, *args):
     speech.___speak(speechSequence, *args)
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
-	def __init__(self, *args):
-        super().__init__(&args)
+    def __init__(self):
+        super().__init__()
         speech.___speak = speech.speak
         speech.speak = speech.___speak
