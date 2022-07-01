@@ -16,19 +16,18 @@ def _(arg):
 # Add-on information variables
 addon_info = {
 	# add-on Name/identifier, internal for NVDA
-	"addon_name": "addonTemplate",
+	"addon_name": "langPredict",
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on
 	# to be shown on installation and add-on information found in Add-ons Manager.
-	"addon_summary": _("Add-on user visible name"),
+	"addon_summary": _("Language Prediction for spoken text"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
-	"addon_description": _("""Description for the add-on.
-It can span multiple lines."""),
+	"addon_description": _("""Predict the language of every spoken text with an ai model and change the voice accordingly, if available."""),
 	# version
-	"addon_version": "x.y",
+	"addon_version": "0.0.1",
 	# Author(s)
-	"addon_author": "name <name@domain.com>",
+	"addon_author": "Stefan Lohmaier <stefan@slohmaier.de>",
 	# URL for the add-on documentation support
 	"addon_url": None,
 	# Documentation file name
