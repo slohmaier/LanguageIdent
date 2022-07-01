@@ -79,11 +79,11 @@ def fixSpeechSequence(speechSequence: SpeechSequence):
 			else:
 				predictLang(langChangeCmd, text)
 			text = ''
-	if text and not langChangeCmd is None:
+	if text:
 		if langChangeCmd is None:
 			insertLangChangeCmd = predictLang(langChangeCmd, text)
 		else:
-			predictLang(langChangeCmd, text)
+			predictLang(langChangeCmd, text)			
 	if not insertLangChangeCmd is None:
 		speechSequence.insert(0, insertLangChangeCmd)
 	log.debug('langChagedCmd={0} insertLangChangedCmd={1} text={2}'.format(str(langChangeCmd), str(insertLangChangeCmd), text))
