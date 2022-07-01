@@ -1,3 +1,4 @@
+from numpy import void0
 import globalPluginHandler
 import sys
 import os
@@ -21,29 +22,30 @@ from speech.commands import (
 
 #add dist-folder to PYTHONPATH
 #TODO: Support 64bit
-distPath = os.path.join(os.path.dirname(os.path.absname(__file__)), 'dist32')
+distPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist32')
 sys.path.append(distPath)
 
 #global variables to hold languages and fasttext model
 # for wraping speak function
-global synthClass
 synthClass = None
-global synthLangs
 synthLangs = {}
-global fasttextModel
 fastTextModel = None
 
 def checkSynth():
-	curSynthClass = str(.__class__)
+	global synthClass
+	global synthLangs
+	curSynthClass = str(speech.synthDriverHandler.getSynth().__class__)
 	if curSynthClass != synthClass:
 		synthClass = curSynthClass
-		synthLangs = []
-		for voice in speech.synthDriverHandler.getSynth().availableVoices:
+		synthLangs = {}
+		for voiceId in speech.synthDriverHandler.getSynth().availableVoices:
+			voice = speech.synthDriverHandler.getSynth().availableVoices[voiceId]
 			lang = voice.language.split('_')[0]
 			if not lang in synthLangs:
 				synthLangs[lang] = voice.language
 
 def predictLang(langChangeCmd: LangChangeCommand, text: str):
+	global fastTextModel
 	#create new langchangecmd if is none
 	synth = speech.synthDriverHandler.getSynth()
 	defaultLang = synth.availableVoices[synth.voice].language
@@ -64,7 +66,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		super().__init__()
 
 		#load fasttext langident model
-		fastTextModel fasttext.load_model(os.path.join(distPath, 'lid.176.ftz'))
+		global fastTextModel
+		import fasttext
+		fastTextModel = fasttext.load_model(os.path.join(distPath, 'lid.176.ftz'))
+		log.debug('LANGPREDICT: loaded model '+str(fastTextModel))
 
 		# Wrap speech.speech.speak, so we can get its output first
 		old_speak = speech.speech.speak
@@ -74,6 +79,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			symbolLevel: Optional[int] = None,
 			priority: Spri = Spri.NORMAL):
 			checkSynth()
+
+			global fastTextModel
+			global synthLangs
 			
 			#deconstruct speechsequence
 			langChangeCmd = None
@@ -98,6 +106,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			if not insertLangChangeCmd is None:
 				speechSequence.insert(0, insertLangChangeCmd)
 
-			return old_speak(sequence, symbolLevel, priority)
+			return old_speak(speechSequence, symbolLevel, priority)
 		#replace built in speak function
 		speech.speech.speak = new_speak
