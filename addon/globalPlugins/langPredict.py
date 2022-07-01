@@ -3,7 +3,8 @@ from scriptHandler import script
 from logHandler import log
 import speech
 import fasttext
-
+from speech.types import SpeechSequence, Optional
+from speech.priorities import Spri
 from speech.commands import (
 	IndexCommand,
 	CharacterModeCommand,
@@ -29,12 +30,18 @@ def initLangs():
         if not lang in synthLangs:
             synthLangs.append(lang)
 
-def speak(speechSequence: list, *args):
-    log.debug('LANGPREDICIT: speechSequence={0}'.format(str(speechSequence)))
-    speech.___speak(speechSequence, *args)
-
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     def __init__(self):
         super().__init__()
-        speech.___speak = speech.speak
-        speech.speak = speech.___speak
+        
+        # Wrap speech.speech.speak, so we can get its output first
+		old_speak = speech.speech.speak
+		@wraps(speech.speech.speak)
+		def new_speak(
+				sequence: SpeechSequence,
+				symbolLevel: Optional[int] = None,
+				priority: Spri = Spri.NORMAL
+		):
+			log.debug('LANGPREDICT')
+			return old_speak(sequence, symbolLevel, priority)
+		speech.speech.speak = new_speak
