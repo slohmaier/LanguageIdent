@@ -96,6 +96,7 @@ def predictLang(langChangeCmd: LangChangeCommand, text: str):
 	defaultLang = synth.availableVoices[synth.voice].language
 	if langChangeCmd is None:
 		langChangeCmd = LangChangeCommand(defaultLang)
+	text = text.replace('\n', ' ').replace('\r', ' ') #fasttext doe not like newlines
 	predictedLang = fastTextModel.predict(text)[0][0][9:] #strip '__label__'
 	log.debug('PREDICTED={0} TEXT={1}'.format(str(predictedLang), text))
 
