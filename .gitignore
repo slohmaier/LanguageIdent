@@ -8,3 +8,13 @@ addon/doc/en/
 *.py[co]
 *.nvda-addon
 .sconsign.dblite
+
+#nvda modules
+addonHandler/
+appModules/
+bla
+config/
+gui/
+locale/
+speech/
+utils/
