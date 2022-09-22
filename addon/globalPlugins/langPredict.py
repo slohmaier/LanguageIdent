@@ -4,6 +4,7 @@ import os
 from scriptHandler import script
 from functools import wraps
 from logHandler import log
+import wx
 import speech
 
 from speech.types import SpeechSequence, Optional
@@ -23,6 +24,11 @@ from speech.commands import (
 #TODO: Support 64bit
 distPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist32')
 sys.path.append(distPath)
+
+#configuration for settings
+config.conf.spec["langPredict"] = {
+	'whitelist': 'string(default=\'\')'
+}
 
 #global variables to hold languages and fasttext model
 # for wraping speak function
@@ -128,3 +134,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			log.debug('langPredict.speech.speak: '+str(speechSequence))
 			return old_speak(speechSequence, symbolLevel, priority)
 		speech.speech.speak = new_speak
+
+class SettingsUi(gui.settingsDialogs.SettingsPanel):
+	def makeSettings(self, settingsSizer):
+		pass
+		#TODO: make ui
