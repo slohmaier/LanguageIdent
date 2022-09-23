@@ -1,12 +1,19 @@
 import globalPluginHandler
 import sys
+<<<<<<< HEAD
 import config
+=======
+>>>>>>> 2748b7d (restore)
 import os
 from scriptHandler import script
 from functools import wraps
 from logHandler import log
+<<<<<<< HEAD
 import wx
 import addonHandler
+from gui import SettingsPanel
+=======
+>>>>>>> 2748b7d (restore)
 import speech
 
 from speech.types import SpeechSequence, Optional
@@ -42,8 +49,11 @@ synthLangs = {}
 fastTextModel = None
 
 def get_whitelist():
-	return [i.trim() for i in config.conf['langPredict']['whitelist'].split(',')]
-
+	whitelist = config.conf['langPredict']['whitelist'].strip()
+	if whitelist:
+		return [i.strip() for i in whitelist.split(',')]
+	else:
+		return []
 
 def checkSynth():
 	global synthClass
@@ -158,7 +168,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return old_speak(speechSequence, symbolLevel, priority)
 		speech.speech.speak = new_speak
 
-class SettingsUi(gui.settingsDialogs.SettingsPanel):
+class SettingsUi(SettingsPanel):
 	title = 'langPredict'
 	panelDescription = 'langPredict automaticly changes the language '+\
 		'for every text, that is spoken. the fasttext-langident AI'+\
@@ -169,3 +179,6 @@ class SettingsUi(gui.settingsDialogs.SettingsPanel):
 		introItem = sHelper.addItem(wx.StaticText(self, label=self.panelDescription))
 		self._whitelist  = sHelper.addLabeledControl(_('Language Whitelist'), wx.TextCtrl)
 		self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
+	
+	def onSave(self):
+		config.conf['langPredict']['whitelist'] = self._whitelist.GetValue()
