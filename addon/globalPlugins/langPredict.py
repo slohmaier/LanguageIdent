@@ -1,19 +1,13 @@
 import globalPluginHandler
 import sys
-<<<<<<< HEAD
 import config
-=======
->>>>>>> 2748b7d (restore)
 import os
 from scriptHandler import script
 from functools import wraps
 from logHandler import log
-<<<<<<< HEAD
 import wx
 import addonHandler
 from gui import SettingsPanel
-=======
->>>>>>> 2748b7d (restore)
 import speech
 
 from speech.types import SpeechSequence, Optional
