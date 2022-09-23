@@ -1,10 +1,12 @@
 import globalPluginHandler
 import sys
+import config
 import os
 from scriptHandler import script
 from functools import wraps
 from logHandler import log
 import wx
+import addonHandler
 import speech
 
 from speech.types import SpeechSequence, Optional
@@ -25,6 +27,9 @@ from speech.commands import (
 distPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist32')
 sys.path.append(distPath)
 
+#make _() available
+addonHandler.initTranslation()
+
 #configuration for settings
 config.conf.spec["langPredict"] = {
 	'whitelist': 'string(default=\'\')'
@@ -36,6 +41,10 @@ synthClass = None
 synthLangs = {}
 fastTextModel = None
 
+def get_whitelist():
+	return [i.trim() for i in config.conf['langPredict']['whitelist'].split(',')]
+
+
 def checkSynth():
 	global synthClass
 	global synthLangs
@@ -43,6 +52,7 @@ def checkSynth():
 	if curSynthClass != synthClass:
 		synthClass = curSynthClass
 		synthLangs = {}
+		whitelist = get_whitelist()
 		for voiceId in speech.synthDriverHandler.getSynth().availableVoices:
 			voice = speech.synthDriverHandler.getSynth().availableVoices[voiceId]
 			lang = voice.language.split('_')[0]
@@ -53,6 +63,17 @@ def checkSynth():
 				['- {0}: {1}'.format(key, synthLangs[key]) for key in synthLangs]
 			)
 		)
+
+		#initialize whitelist if not all languages are in Synthesizer
+		for lang in whitelist:
+			if not lang in synthLangs.keys():
+				whitelist = []
+				break
+		
+		#initialize with all supported languages, if whitelist empty or reset
+		if not whitelist:
+			#TODO: Show messagebox?
+			config.conf['langPredict']['whitelist'] = ', '.join(synthLangs.keys())
 
 		# Wrap speech.speech.speak, so we can get its output first
 		old_synth_speak = speech.synthDriverHandler.getSynth().speak
@@ -144,13 +165,7 @@ class SettingsUi(gui.settingsDialogs.SettingsPanel):
 		' model is used, which is trained with Wikipedia.'
 
 	def makeSettings(self, settingsSizer):
-		helper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
-		introItem = helper.addItem(wx.StaticText(self, label=self.panelDescription))
-
-		groupSizer = wx.StaticBoxSizer(
-			wx.VERTICAL, self,
-			# Translators: label of the log files location grouping.
-			label=_("Log &Directory: ")
-		)
-		fileGroupHelper = helper.addItem(gui.guiHelper.BoxSizerHelper(self, sizer=groupSizer))
-		fileGroupBox = groupSizer.GetStaticBox()
+		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
+		introItem = sHelper.addItem(wx.StaticText(self, label=self.panelDescription))
+		self._whitelist  = sHelper.addLabeledControl(_('Language Whitelist'), wx.TextCtrl)
+		self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
