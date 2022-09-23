@@ -129,6 +129,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		def new_speak(
 			speechSequence: SpeechSequence,
 			symbolLevel: Optional[int] = None,
+
+
 			priority: Spri = Spri.NORMAL):
 			speechSequence = fixSpeechSequence(speechSequence)
 			log.debug('langPredict.speech.speak: '+str(speechSequence))
@@ -136,6 +138,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		speech.speech.speak = new_speak
 
 class SettingsUi(gui.settingsDialogs.SettingsPanel):
+	title = 'langPredict'
+	panelDescription = 'langPredict automaticly changes the language '+\
+		'for every text, that is spoken. the fasttext-langident AI'+\
+		' model is used, which is trained with Wikipedia.'
+
 	def makeSettings(self, settingsSizer):
-		pass
-		#TODO: make ui
+		helper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
+		introItem = helper.addItem(wx.StaticText(self, label=self.panelDescription))
+
+		groupSizer = wx.StaticBoxSizer(
+			wx.VERTICAL, self,
+			# Translators: label of the log files location grouping.
+			label=_("Log &Directory: ")
+		)
+		fileGroupHelper = helper.addItem(gui.guiHelper.BoxSizerHelper(self, sizer=groupSizer))
+		fileGroupBox = groupSizer.GetStaticBox()
