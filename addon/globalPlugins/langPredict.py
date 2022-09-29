@@ -7,6 +7,7 @@ from functools import wraps
 from logHandler import log
 import wx
 import addonHandler
+import gui
 from gui import SettingsPanel
 import speech
 
@@ -142,6 +143,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def __init__(self):
 		super().__init__()
 
+		#add settings to nvda
+		gui.settingsDialogs.NVDASettingsDialog.categoryClasses.append(langPredictSettings)
+
 		#load fasttext langident model
 		global fastTextModel
 		import fasttext
@@ -162,7 +166,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return old_speak(speechSequence, symbolLevel, priority)
 		speech.speech.speak = new_speak
 
-class SettingsUi(SettingsPanel):
+class langPredictSettings(SettingsPanel):
 	title = 'langPredict'
 	panelDescription = 'langPredict automaticly changes the language '+\
 		'for every text, that is spoken. the fasttext-langident AI'+\
