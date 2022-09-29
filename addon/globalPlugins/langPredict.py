@@ -176,7 +176,14 @@ class langPredictSettings(SettingsPanel):
 		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
 		introItem = sHelper.addItem(wx.StaticText(self, label=self.panelDescription))
 		self._whitelist  = sHelper.addLabeledControl(_('Language Whitelist'), wx.TextCtrl)
-		self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
+		self._loadSettings()
 	
+	def _loadSettings(self):
+		self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
+
 	def onSave(self):
 		config.conf['langPredict']['whitelist'] = self._whitelist.GetValue()
+	
+	def onPanelActivated(self):
+		self._loadSettings()
+		self.Show()
