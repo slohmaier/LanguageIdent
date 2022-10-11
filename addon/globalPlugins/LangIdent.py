@@ -26,7 +26,7 @@ from .langid import classify, set_languages
 addonHandler.initTranslation()
 
 #configuration for settings
-config.conf.spec["langPredict"] = {
+config.conf.spec["LanguageIdentification"] = {
 	'whitelist': 'string(default=\'\')'
 }
 
@@ -36,7 +36,7 @@ synthClass = None
 synthLangs = {}
 
 def get_whitelist():
-	whitelist = config.conf['langPredict']['whitelist'].strip()
+	whitelist = config.conf['LanguageIdentification']['whitelist'].strip()
 	if whitelist:
 		return [i.strip() for i in whitelist.split(',')]
 	else:
@@ -70,14 +70,14 @@ def checkSynth():
 		#initialize with all supported languages, if whitelist empty or reset
 		if not whitelist:
 			#TODO: Show messagebox?
-			config.conf['langPredict']['whitelist'] = ', '.join(synthLangs.keys())
+			config.conf['LanguageIdentification']['whitelist'] = ', '.join(synthLangs.keys())
 
 		# Wrap speech.speech.speak, so we can get its output first
 		old_synth_speak = speech.synthDriverHandler.getSynth().speak
 		@wraps(speech.synthDriverHandler.getSynth().speak)
 		def new_synth_speak(speechSequence: SpeechSequence):
 			speechSequence = fixSpeechSequence(speechSequence)
-			log.debug('langPredict.synth.speak: '+str(speechSequence))
+			log.debug('LanguageIdentification.synth.speak: '+str(speechSequence))
 			return old_synth_speak(speechSequence)
 		#replace built in speak function
 		speech.synthDriverHandler.getSynth().speak = new_synth_speak
@@ -113,7 +113,7 @@ def fixSpeechSequence(speechSequence: SpeechSequence):
 	return speechSequence
 
 def predictLang(langChangeCmd: LangChangeCommand, text: str):
-	log.debug('langPredict predictLang: '+text)
+	log.debug('LanguageIdentification predictLang: '+text)
 	whitelist = get_whitelist()
 	#create new langchangecmd if is none
 	synth = speech.synthDriverHandler.getSynth()
@@ -138,7 +138,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		super().__init__()
 
 		#add settings to nvda
-		gui.settingsDialogs.NVDASettingsDialog.categoryClasses.append(langPredictSettings)
+		gui.settingsDialogs.NVDASettingsDialog.categoryClasses.append(LanguageIdentificationSettings)
 
 		#setting languages
 		set_languages(get_whitelist())
@@ -153,13 +153,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 			priority: Spri = Spri.NORMAL):
 			speechSequence = fixSpeechSequence(speechSequence)
-			log.debug('langPredict.speech.speak: '+str(speechSequence))
+			log.debug('LanguageIdentification.speech.speak: '+str(speechSequence))
 			return old_speak(speechSequence, symbolLevel, priority)
 		speech.speech.speak = new_speak
 
-class langPredictSettings(SettingsPanel):
-	title = 'langPredict'
-	panelDescription = 'langPredict automaticly changes the language '+\
+class LanguageIdentificationSettings(SettingsPanel):
+	title = 'LanguageIdentification'
+	panelDescription = 'LanguageIdentification automaticly changes the language '+\
 		'for every text, that is spoken. the fasttext-langident AI'+\
 		' model is used, which is trained with Wikipedia.'
 
@@ -170,17 +170,17 @@ class langPredictSettings(SettingsPanel):
 		self._loadSettings()
 	
 	def _loadSettings(self):
-		self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
+		self._whitelist.SetValue(config.conf['LanguageIdentification']['whitelist'])
 
 	def onSave(self):
 		newWhitelist = [i.strip() for i in self._whitelist.GetValue().split(',')]
 		try:
 			set_languages(newWhitelist)
-			config.conf['langPredict']['whitelist'] = self._whitelist.GetValue()
+			config.conf['LanguageIdentification']['whitelist'] = self._whitelist.GetValue()
 		except:
-			log.debug('langPredict: Invalid languages: ' + self._whitelist.GetValue())
-			config.conf['langPredict']['whitelist'] = ', '.join(synthLangs.keys())
-			self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
+			log.debug('LanguageIdentification: Invalid languages: ' + self._whitelist.GetValue())
+			config.conf['LanguageIdentification']['whitelist'] = ', '.join(synthLangs.keys())
+			self._whitelist.SetValue(config.conf['LanguageIdentification']['whitelist'])
 	
 	def onPanelActivated(self):
 		self._loadSettings()
