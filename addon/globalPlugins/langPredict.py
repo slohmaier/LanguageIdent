@@ -123,6 +123,7 @@ def fixSpeechSequence(speechSequence: SpeechSequence):
 
 def predictLang(langChangeCmd: LangChangeCommand, text: str):
 	global fastTextModel
+	whitelist = get_whitelist()
 	#create new langchangecmd if is none
 	synth = speech.synthDriverHandler.getSynth()
 	defaultLang = synth.availableVoices[synth.voice].language
@@ -131,6 +132,10 @@ def predictLang(langChangeCmd: LangChangeCommand, text: str):
 	text = text.replace('\n', ' ').replace('\r', ' ') #fasttext doe not like newlines
 	predictedLang = fastTextModel.predict(text)[0][0][9:] #strip '__label__'
 	log.debug('PREDICTED={0} TEXT={1}'.format(str(predictedLang), text))
+	if whitelist:
+		if not predictLang in whitelist:
+			log.debug('PREDICTED LANG not in whitelist! Using defaultLang')
+			predictedLang = defaultLang
 
 	#don't use a different dialect due to sorting
 	if defaultLang.startswith(predictedLang):
