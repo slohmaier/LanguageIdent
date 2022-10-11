@@ -1,33 +1,26 @@
-import globalPluginHandler
-import sys
-import config
 import os
-from scriptHandler import script
+import sys
 from functools import wraps
-from logHandler import log
-import wx
+
 import addonHandler
+import config
+import globalPluginHandler
 import gui
-from gui import SettingsPanel
 import speech
-
-from speech.types import SpeechSequence, Optional
+import wx
+from gui import SettingsPanel
+from logHandler import log
+from scriptHandler import script
+from speech.commands import (BreakCommand, CharacterModeCommand, IndexCommand,
+                             LangChangeCommand, PhonemeCommand, PitchCommand,
+                             RateCommand, VolumeCommand)
 from speech.priorities import Spri
-from speech.commands import (
-    IndexCommand,
-    CharacterModeCommand,
-    LangChangeCommand,
-    BreakCommand,
-    PitchCommand,
-    RateCommand,
-    VolumeCommand,
-    PhonemeCommand,
-)
+from speech.types import Optional, SpeechSequence
 
-#add dist-folder to PYTHONPATH
-#TODO: Support 64bit
-distPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist32')
-sys.path.append(distPath)
+distdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist32')
+sys.path.append(distdir)
+
+from .langid import classify, set_languages
 
 #make _() available
 addonHandler.initTranslation()
@@ -41,7 +34,6 @@ config.conf.spec["langPredict"] = {
 # for wraping speak function
 synthClass = None
 synthLangs = {}
-fastTextModel = None
 
 def get_whitelist():
 	whitelist = config.conf['langPredict']['whitelist'].strip()
@@ -57,7 +49,6 @@ def checkSynth():
 	if curSynthClass != synthClass:
 		synthClass = curSynthClass
 		synthLangs = {}
-		whitelist = get_whitelist()
 		for voiceId in speech.synthDriverHandler.getSynth().availableVoices:
 			voice = speech.synthDriverHandler.getSynth().availableVoices[voiceId]
 			lang = voice.language.split('_')[0]
@@ -70,6 +61,7 @@ def checkSynth():
 		)
 
 		#initialize whitelist if not all languages are in Synthesizer
+		whitelist = get_whitelist()
 		for lang in whitelist:
 			if not lang in synthLangs.keys():
 				whitelist = []
@@ -93,7 +85,6 @@ def checkSynth():
 def fixSpeechSequence(speechSequence: SpeechSequence):
 	checkSynth()
 
-	global fastTextModel
 	global synthLangs
 	
 	#deconstruct speechsequence
@@ -122,7 +113,7 @@ def fixSpeechSequence(speechSequence: SpeechSequence):
 	return speechSequence
 
 def predictLang(langChangeCmd: LangChangeCommand, text: str):
-	global fastTextModel
+	log.debug('langPredict predictLang: '+text)
 	whitelist = get_whitelist()
 	#create new langchangecmd if is none
 	synth = speech.synthDriverHandler.getSynth()
@@ -130,12 +121,10 @@ def predictLang(langChangeCmd: LangChangeCommand, text: str):
 	if langChangeCmd is None:
 		langChangeCmd = LangChangeCommand(defaultLang)
 	text = text.replace('\n', ' ').replace('\r', ' ') #fasttext doe not like newlines
-	predictedLang = fastTextModel.predict(text)[0][0][9:] #strip '__label__'
+	predictedLang = classify(text)[0]
+	if predictedLang == None:
+		predictedLang = defaultLang
 	log.debug('PREDICTED={0} TEXT={1}'.format(str(predictedLang), text))
-	if whitelist:
-		if not predictLang in whitelist:
-			log.debug('PREDICTED LANG not in whitelist! Using defaultLang')
-			predictedLang = defaultLang
 
 	#don't use a different dialect due to sorting
 	if defaultLang.startswith(predictedLang):
@@ -151,11 +140,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		#add settings to nvda
 		gui.settingsDialogs.NVDASettingsDialog.categoryClasses.append(langPredictSettings)
 
-		#load fasttext langident model
-		global fastTextModel
-		import fasttext
-		fastTextModel = fasttext.load_model(os.path.join(distPath, 'lid.176.ftz'))
-		log.debug('LANGPREDICT: loaded model '+str(fastTextModel))
+		#setting languages
+		set_languages(get_whitelist())
 
 		# Wrap speech.speech.speak, so we can get its output first
 		old_speak = speech.speech.speak
@@ -187,7 +173,14 @@ class langPredictSettings(SettingsPanel):
 		self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
 
 	def onSave(self):
-		config.conf['langPredict']['whitelist'] = self._whitelist.GetValue()
+		newWhitelist = [i.strip() for i in self._whitelist.GetValue().split(',')]
+		try:
+			set_languages(newWhitelist)
+			config.conf['langPredict']['whitelist'] = self._whitelist.GetValue()
+		except:
+			log.debug('langPredict: Invalid languages: ' + self._whitelist.GetValue())
+			config.conf['langPredict']['whitelist'] = ', '.join(synthLangs.keys())
+			self._whitelist.SetValue(config.conf['langPredict']['whitelist'])
 	
 	def onPanelActivated(self):
 		self._loadSettings()
