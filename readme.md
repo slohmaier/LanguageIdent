@@ -1,13 +1,16 @@
-# LangPredic - NVDA Addon
+# LanguageIdent - NVDA Addon
 
-This addon predics all spoken text with the langident
-fasttext model ( https://fasttext.cc/docs/en/language-identification.html ). 
-It's based on NVDAOneCoreAutoLang https://github.com/slohmaier/NVDAOneCoreAutoLang
+This NVDA addon processes all spoken text. It identifies the language If the synthesizer supports it, the matching language is used the speak the text.
+
+Features:
+- identify language for all spoken text in NVDA with ( https://github.com/saffsd/langid.py )
+- change or add LangChangeCmd's with the identified language
+- Whiteliste for considered languages for language identification.
 
 # Tested synthesizers
 
  - builtin One Core
- - IBM TTS
+ - IBM TTS ( https://github.com/davidacm/NVDA-IBMTTS-Driver )
 
 # Not working
 
