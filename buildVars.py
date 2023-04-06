@@ -20,16 +20,16 @@ addon_info = {
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on
 	# to be shown on installation and add-on information found in Add-ons Manager.
-	"addon_summary": _("Identify the language for every spoken text using AI and change the language."),
+	"addon_summary": _("This plugin identifies the language of any spoken text and automatically switch to the appropriate language before it is spoken with ease."),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
-	"addon_description": _("""Identify the language for every spoken text using AI and change the language. You can specify a whitelist. Only languages in the whitelist are considered for language identification."""),
+	"addon_description": _("""This remarkable plugin utilizes an advanced AI model to detect the language of every spoken text and automatically switches the language to match. You have the freedom to select which languages are recognized for language identification, providing ultimate flexibility. Additionally, the plugin disregards any tags and relies solely on the AI model for accurate language detection."""),
 	# version
 	"addon_version": "0.2.0",
 	# Author(s)
 	"addon_author": "Stefan Lohmaier <stefan@slohmaier.de>",
 	# URL for the add-on documentation support
-	"addon_url": None,
+	"addon_url": 'https://github.com/slohmaier/LanguageIdent',
 	# Documentation file name
 	"addon_docFileName": "readme.html",
 	# Minimum NVDA version supported (e.g. "2018.3.0", minor version is optional)
@@ -39,7 +39,7 @@ addon_info = {
 	# Add-on update channel (default is None, denoting stable releases,
 	# and for development releases, use "dev".)
 	# Do not change unless you know what you are doing!
-	"addon_updateChannel": "dev",
+	"addon_updateChannel": None,
 }
 
 # Define the python files that are the sources of your add-on.
@@ -50,7 +50,7 @@ addon_info = {
 # pythonSources = ["addon/globalPlugins/*.py"]
 # For more information on SCons Glob expressions please take a look at:
 # https://scons.org/doc/production/HTML/scons-user/apd.html
-pythonSources = []
+pythonSources = ['addon/globalPlugins/LangIdent.py']
 
 # Files that contain strings for translation. Usually your python sources
 i18nSources = pythonSources + ["buildVars.py"]

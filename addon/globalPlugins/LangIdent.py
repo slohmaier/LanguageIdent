@@ -154,14 +154,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 class LanguageIdentificationSettings(SettingsPanel):
 	title = 'LanguageIdentification'
-	panelDescription = 'LanguageIdentification automaticly changes the language '+\
-		'for every text, that is spoken. the fasttext-langident AI'+\
-		' model is used, which is trained with Wikipedia.'
 
 	def makeSettings(self, settingsSizer):
 		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
-		sHelper.addItem(wx.StaticText(self, label=self.panelDescription))
 		
+		#make a title for the Settings-Pane
+		synthName = speech.synthDriverHandler.getSynth().name
+		description = _('Available languages for Synthesizes "{0}":').format(synthName)
+		sHelper.addItem(wx.StaticText(self, label=description))
+		
+		#create a checkbox for each language supported by the synth
 		self._langCheckboxes = []
 		for lang in synthLangs.keys():
 			checkbox = wx.CheckBox(self, label=lang)
@@ -171,15 +173,19 @@ class LanguageIdentificationSettings(SettingsPanel):
 		self._loadSettings()
 	
 	def _loadSettings(self):
+		#check the checkbox for a language, if in whitelist
 		whitelist =  get_whitelist()
 		for checkbox in self._langCheckboxes:
 			checkbox.SetValue(checkbox.GetLabel() in whitelist)
 
 	def onSave(self):
+		#create list with checked languages
 		newWhitelist = []
 		for checkbox in self._langCheckboxes:
 			if checkbox.GetValue():
 				newWhitelist.append(checkbox.GetLabel())
+
+		#store new checked languages and set in langid
 		try:
 			set_languages(newWhitelist)
 			config.conf['LanguageIdentification']['whitelist'] = ', '.join(newWhitelist)
