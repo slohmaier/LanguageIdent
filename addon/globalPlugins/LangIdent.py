@@ -13,8 +13,10 @@ from speech.commands import LangChangeCommand
 from speech.priorities import Spri
 from speech.types import Optional, SpeechSequence
 
-distdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist32')
-sys.path.append(distdir)
+#add numpy in zip to sys.path
+scriptDir = os.path.dirname(os.path.abspath(__file__))
+distDir = os.path.join(os.path.dirname(scriptDir), 'dist')
+sys.path.append(distDir)
 
 from .langid import classify, set_languages
 
