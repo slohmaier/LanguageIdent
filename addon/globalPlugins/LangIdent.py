@@ -161,21 +161,32 @@ class LanguageIdentificationSettings(SettingsPanel):
 	def makeSettings(self, settingsSizer):
 		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
 		sHelper.addItem(wx.StaticText(self, label=self.panelDescription))
-		self._whitelist  = sHelper.addLabeledControl(_('Language Whitelist'), wx.TextCtrl)
+		
+		self._langCheckboxes = []
+		for lang in synthLangs.keys():
+			checkbox = wx.CheckBox(self, label=lang)
+			sHelper.addItem(checkbox)
+			self._langCheckboxes.append(checkbox)
+
 		self._loadSettings()
 	
 	def _loadSettings(self):
-		self._whitelist.SetValue(config.conf['LanguageIdentification']['whitelist'])
+		whitelist =  get_whitelist()
+		for checkbox in self._langCheckboxes:
+			checkbox.SetValue(checkbox.GetLabel() in whitelist)
 
 	def onSave(self):
-		newWhitelist = [i.strip() for i in self._whitelist.GetValue().split(',')]
+		newWhitelist = []
+		for checkbox in self._langCheckboxes:
+			if checkbox.GetValue():
+				newWhitelist.append(checkbox.GetLabel())
 		try:
 			set_languages(newWhitelist)
-			config.conf['LanguageIdentification']['whitelist'] = self._whitelist.GetValue()
+			config.conf['LanguageIdentification']['whitelist'] = ', '.join(newWhitelist)
 		except:
-			log.debug('LanguageIdentification: Invalid languages: ' + self._whitelist.GetValue())
+			log.debug('LanguageIdentification: Invalid languages: ' + newWhitelist)
 			config.conf['LanguageIdentification']['whitelist'] = ', '.join(synthLangs.keys())
-			self._whitelist.SetValue(config.conf['LanguageIdentification']['whitelist'])
+			self._loadSettings()
 	
 	def onPanelActivated(self):
 		self._loadSettings()
