@@ -1,19 +1,15 @@
 import os
 import sys
-from functools import wraps
-
 import addonHandler
 import config
 import globalPluginHandler
 import gui
 import speech
 import wx
+from functools import wraps
 from gui import SettingsPanel
 from logHandler import log
-from scriptHandler import script
-from speech.commands import (BreakCommand, CharacterModeCommand, IndexCommand,
-                             LangChangeCommand, PhonemeCommand, PitchCommand,
-                             RateCommand, VolumeCommand)
+from speech.commands import LangChangeCommand
 from speech.priorities import Spri
 from speech.types import Optional, SpeechSequence
 
@@ -114,7 +110,6 @@ def fixSpeechSequence(speechSequence: SpeechSequence):
 
 def predictLang(langChangeCmd: LangChangeCommand, text: str):
 	log.debug('LanguageIdentification predictLang: '+text)
-	whitelist = get_whitelist()
 	#create new langchangecmd if is none
 	synth = speech.synthDriverHandler.getSynth()
 	defaultLang = synth.availableVoices[synth.voice].language
@@ -165,7 +160,7 @@ class LanguageIdentificationSettings(SettingsPanel):
 
 	def makeSettings(self, settingsSizer):
 		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
-		introItem = sHelper.addItem(wx.StaticText(self, label=self.panelDescription))
+		sHelper.addItem(wx.StaticText(self, label=self.panelDescription))
 		self._whitelist  = sHelper.addLabeledControl(_('Language Whitelist'), wx.TextCtrl)
 		self._loadSettings()
 	
