@@ -7,7 +7,7 @@ import gui
 import speech
 import wx
 from functools import wraps
-from gui import SettingsPanel
+from gui.settingsDialogs import SettingsPanel
 from logHandler import log
 from speech.commands import LangChangeCommand
 from speech.priorities import Spri
