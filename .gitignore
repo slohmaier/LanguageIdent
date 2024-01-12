@@ -18,3 +18,4 @@ gui/
 locale/
 speech/
 utils/
+.vscode
