@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import addonHandler
 import config
 import globalPluginHandler
@@ -13,12 +14,9 @@ from speech.commands import LangChangeCommand
 from speech.priorities import Spri
 from speech.types import Optional, SpeechSequence
 
-#add numpy in zip to sys.path
-scriptDir = os.path.dirname(os.path.abspath(__file__))
-distDir = os.path.join(os.path.dirname(scriptDir), 'dist')
-sys.path.append(distDir)
-
-from .langid import classify, set_languages
+from .langdetect import PROFILES_DIRECTORY
+from .langdetect.detector_factory import DetectorFactory, LangProfile
+from .langdetect.lang_detect_exception import LangDetectException
 
 #make _() available
 addonHandler.initTranslation()
@@ -32,6 +30,20 @@ config.conf.spec["LanguageIdentification"] = {
 # for wraping speak function
 synthClass = None
 synthLangs = {}
+detectLangs = os.listdir(PROFILES_DIRECTORY)
+factory = None
+
+def init_factory():
+	global factory
+	factory = DetectorFactory()
+	index = 0
+	log.debug('Initializing language preditiction for languages: '+str(get_whitelist()))
+	for lang in get_whitelist():
+		path = os.path.join(PROFILES_DIRECTORY, lang)   
+		with open(path, 'r') as f:
+			profile = LangProfile(**json.load(f))
+			factory.add_profile(profile, index, len(lang))
+		index += 1
 
 def get_whitelist():
 	whitelist = config.conf['LanguageIdentification']['whitelist'].strip()
@@ -118,7 +130,15 @@ def predictLang(langChangeCmd: LangChangeCommand, text: str):
 	if langChangeCmd is None:
 		langChangeCmd = LangChangeCommand(defaultLang)
 	text = text.replace('\n', ' ').replace('\r', ' ') #fasttext doe not like newlines
-	predictedLang = classify(text)[0]
+
+	if factory is None:
+		init_factory()
+	predictor = factory.create()
+	predictor.append(text)
+	try:
+		predictedLang = predictor.detect()
+	except LangDetectException:
+		predictedLang = defaultLang
 	if predictedLang == None:
 		predictedLang = defaultLang
 	log.debug('PREDICTED={0} TEXT={1}'.format(str(predictedLang), text))
@@ -136,9 +156,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 		#add settings to nvda
 		gui.settingsDialogs.NVDASettingsDialog.categoryClasses.append(LanguageIdentificationSettings)
-
-		#setting languages
-		set_languages(get_whitelist())
 
 		# Wrap speech.speech.speak, so we can get its output first
 		old_speak = speech.speech.speak
