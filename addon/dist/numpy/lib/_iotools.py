@@ -23,8 +23,7 @@ def _decode_line(line, encoding=None):
 
     Returns
     -------
-    decoded_line : unicode
-         Unicode in Python 2, a str (unicode) in Python 3.
+    decoded_line : str
 
     """
     if type(line) is bytes:
@@ -514,8 +513,8 @@ class StringConverter:
                     (nx.complexfloating, complex, nx.nan + 0j),
                     # Last, try with the string types (must be last, because
                     # `_mapper[-1]` is used as default in some cases)
-                    (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???'),
+                    (nx.str_, asunicode, '???'),
+                    (nx.bytes_, asbytes, '???'),
                     ])
 
     @classmethod

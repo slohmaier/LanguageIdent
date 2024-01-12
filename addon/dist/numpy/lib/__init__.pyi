@@ -1,5 +1,7 @@
 import math as math
-from typing import Any, List
+from typing import Any
+
+from numpy._pytesttester import PytestTester
 
 from numpy import (
     ndenumerate as ndenumerate,
@@ -12,7 +14,7 @@ from numpy.lib import (
     format as format,
     mixins as mixins,
     scimath as scimath,
-    stride_tricks as stride_stricks,
+    stride_tricks as stride_tricks,
 )
 
 from numpy.lib._version import (
@@ -62,7 +64,6 @@ from numpy.lib.function_base import (
     digitize as digitize,
     cov as cov,
     corrcoef as corrcoef,
-    msort as msort,
     median as median,
     sinc as sinc,
     hamming as hamming,
@@ -81,6 +82,12 @@ from numpy.lib.function_base import (
     interp as interp,
     add_newdoc_ufunc as add_newdoc_ufunc,
     quantile as quantile,
+)
+
+from numpy.lib.histograms import (
+    histogram_bin_edges as histogram_bin_edges,
+    histogram as histogram,
+    histogramdd as histogramdd,
 )
 
 from numpy.lib.index_tricks import (
@@ -122,7 +129,6 @@ from numpy.lib.npyio import (
     recfromtxt as recfromtxt,
     recfromcsv as recfromcsv,
     load as load,
-    loads as loads,
     save as save,
     savez as savez,
     savez_compressed as savez_compressed,
@@ -224,10 +230,16 @@ from numpy.lib.utils import (
     lookfor as lookfor,
     byte_bounds as byte_bounds,
     safe_eval as safe_eval,
+    show_runtime as show_runtime,
 )
 
-__all__: List[str]
+from numpy.core.multiarray import (
+    tracemalloc_domain as tracemalloc_domain,
+)
+
+__all__: list[str]
+__path__: list[str]
+test: PytestTester
 
 __version__ = version
 emath = scimath
-tracemalloc_domain: int

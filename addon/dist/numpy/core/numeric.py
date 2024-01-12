@@ -4,20 +4,22 @@ import operator
 import sys
 import warnings
 import numbers
+import builtins
 
 import numpy as np
 from . import multiarray
 from .multiarray import (
-    _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
+    fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
     asfortranarray, broadcast, can_cast, compare_chararrays,
     concatenate, copyto, dot, dtype, empty,
-    empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
-    inner, lexsort, matmul, may_share_memory,
+    empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
+    fromstring, inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros, normalize_axis_index)
+    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state,
+    _using_numpy2_behavior)
 
 from . import overrides
 from . import umath
@@ -26,8 +28,8 @@ from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ._exceptions import TooHardError, AxisError
-from ._ufunc_config import errstate
+from ..exceptions import ComplexWarning, TooHardError, AxisError
+from ._ufunc_config import errstate, _no_nep50_warning
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -41,7 +43,7 @@ __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
     'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
-    'fromstring', 'fromfile', 'frombuffer', 'where',
+    'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
     'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
     'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
@@ -52,21 +54,10 @@ __all__ = [
     'identity', 'allclose', 'compare_chararrays', 'putmask',
     'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
-    'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
+    'BUFSIZE', 'ALLOW_THREADS', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
-
-
-@set_module('numpy')
-class ComplexWarning(RuntimeWarning):
-    """
-    The warning raised when casting a complex dtype to a real dtype.
-
-    As implemented, casting a complex number to a real discards its imaginary
-    part, but this behavior may not be what the user actually wants.
-
-    """
-    pass
+    'MAY_SHARE_EXACT', '_get_promotion_state', '_set_promotion_state',
+    '_using_numpy2_behavior']
 
 
 def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -136,14 +127,10 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
-    # needed instead of a 0 to get same result as zeros for for string dtypes
+    # needed instead of a 0 to get same result as zeros for string dtypes
     z = zeros(1, dtype=res.dtype)
     multiarray.copyto(res, z, casting='unsafe')
     return res
-
-
-def _ones_dispatcher(shape, dtype=None, order=None, *, like=None):
-    return(like,)
 
 
 @set_array_function_like_doc
@@ -199,16 +186,14 @@ def ones(shape, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _ones_with_like(shape, dtype=dtype, order=order, like=like)
+        return _ones_with_like(like, shape, dtype=dtype, order=order)
 
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
 
 
-_ones_with_like = array_function_dispatch(
-    _ones_dispatcher
-)(ones)
+_ones_with_like = array_function_dispatch()(ones)
 
 
 def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -335,7 +320,8 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _full_with_like(shape, fill_value, dtype=dtype, order=order, like=like)
+        return _full_with_like(
+                like, shape, fill_value, dtype=dtype, order=order)
 
     if dtype is None:
         fill_value = asarray(fill_value)
@@ -345,9 +331,7 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
     return a
 
 
-_full_with_like = array_function_dispatch(
-    _full_dispatcher
-)(full)
+_full_with_like = array_function_dispatch()(full)
 
 
 def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None, shape=None):
@@ -364,7 +348,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     a : array_like
         The shape and data-type of `a` define these same attributes of
         the returned array.
-    fill_value : scalar
+    fill_value : array_like
         Fill value.
     dtype : data-type, optional
         Overrides the data type of the result.
@@ -412,6 +396,12 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     >>> np.full_like(y, 0.1)
     array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
+    >>> y = np.zeros([2, 2, 3], dtype=int)
+    >>> np.full_like(y, [0, 0, 255])
+    array([[[  0,   0, 255],
+            [  0,   0, 255]],
+           [[  0,   0, 255],
+            [  0,   0, 255]]])
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
     multiarray.copyto(res, fill_value, casting='unsafe')
@@ -627,7 +617,7 @@ def flatnonzero(a):
     """
     Return indices that are non-zero in the flattened version of a.
 
-    This is equivalent to np.nonzero(np.ravel(a))[0].
+    This is equivalent to ``np.nonzero(np.ravel(a))[0]``.
 
     Parameters
     ----------
@@ -637,7 +627,7 @@ def flatnonzero(a):
     Returns
     -------
     res : ndarray
-        Output array, containing the indices of the elements of `a.ravel()`
+        Output array, containing the indices of the elements of ``a.ravel()``
         that are non-zero.
 
     See Also
@@ -669,16 +659,16 @@ def _correlate_dispatcher(a, v, mode=None):
 
 @array_function_dispatch(_correlate_dispatcher)
 def correlate(a, v, mode='valid'):
-    """
+    r"""
     Cross-correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal
-    processing texts::
+    processing texts:
 
-        c_{av}[k] = sum_n a[n+k] * conj(v[n])
+    .. math:: c_k = \sum_n a_{n+k} \cdot \overline{v}_n
 
-    with a and v sequences being zero-padded where necessary and conj being
-    the conjugate.
+    with a and v sequences being zero-padded where necessary and
+    :math:`\overline x` denoting complex conjugation.
 
     Parameters
     ----------
@@ -700,21 +690,21 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
-    scipy.signal.correlate : uses FFT which has superior performance on large arrays. 
+    scipy.signal.correlate : uses FFT which has superior performance on large arrays.
 
     Notes
     -----
     The definition of correlation above is not unique and sometimes correlation
-    may be defined differently. Another common definition is::
+    may be defined differently. Another common definition is:
 
-        c'_{av}[k] = sum_n a[n] conj(v[n+k])
+    .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
-    which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
+    which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
 
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
     be preferable.
-    
+
 
     Examples
     --------
@@ -731,8 +721,8 @@ def correlate(a, v, mode='valid'):
     array([ 0.5-0.5j,  1.0+0.j ,  1.5-1.5j,  3.0-1.j ,  0.0+0.j ])
 
     Note that you get the time reversed, complex conjugated result
-    when the two input sequences change places, i.e.,
-    ``c_{va}[k] = c^{*}_{av}[-k]``:
+    (:math:`\overline{c_{-k}}`) when the two input sequences a and v change
+    places:
 
     >>> np.correlate([0, 1, 0.5j], [1+1j, 2, 3-1j], 'full')
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
@@ -798,7 +788,7 @@ def convolve(a, v, mode='full'):
     -----
     The discrete convolution operation is defined as
 
-    .. math:: (a * v)[n] = \\sum_{m = -\\infty}^{\\infty} a[m] v[n - m]
+    .. math:: (a * v)_n = \\sum_{m = -\\infty}^{\\infty} a_m v_{n - m}
 
     It can be shown that a convolution :math:`x(t) * y(t)` in time/space
     is equivalent to the multiplication :math:`X(f) Y(f)` in the Fourier
@@ -853,14 +843,13 @@ def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
 
-    Given two vectors, ``a = [a0, a1, ..., aM]`` and
-    ``b = [b0, b1, ..., bN]``,
+    Given two vectors `a` and `b` of length ``M`` and ``N``, repsectively,
     the outer product [1]_ is::
 
-      [[a0*b0  a0*b1 ... a0*bN ]
-       [a1*b0    .
+      [[a_0*b_0  a_0*b_1 ... a_0*b_{N-1} ]
+       [a_1*b_0    .
        [ ...          .
-       [aM*b0            aM*bN ]]
+       [a_{M-1}*b_0            a_{M-1}*b_{N-1} ]]
 
     Parameters
     ----------
@@ -892,9 +881,9 @@ def outer(a, b, out=None):
 
     References
     ----------
-    .. [1] : G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
-             ed., Baltimore, MD, Johns Hopkins University Press, 1996,
-             pg. 8.
+    .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
+           ed., Baltimore, MD, Johns Hopkins University Press, 1996,
+           pg. 8.
 
     Examples
     --------
@@ -1184,7 +1173,7 @@ def roll(a, shift, axis=None):
     >>> np.roll(x, -2)
     array([2, 3, 4, 5, 6, 7, 8, 9, 0, 1])
 
-    >>> x2 = np.reshape(x, (2,5))
+    >>> x2 = np.reshape(x, (2, 5))
     >>> x2
     array([[0, 1, 2, 3, 4],
            [5, 6, 7, 8, 9]])
@@ -1206,6 +1195,12 @@ def roll(a, shift, axis=None):
     >>> np.roll(x2, -1, axis=1)
     array([[1, 2, 3, 4, 0],
            [6, 7, 8, 9, 5]])
+    >>> np.roll(x2, (1, 1), axis=(1, 0))
+    array([[9, 5, 6, 7, 8],
+           [4, 0, 1, 2, 3]])
+    >>> np.roll(x2, (2, 1), axis=(1, 0))
+    array([[8, 9, 5, 6, 7],
+           [3, 4, 0, 1, 2]])
 
     """
     a = asanyarray(a)
@@ -1287,7 +1282,7 @@ def rollaxis(a, axis, start=0):
            +-------------------+----------------------+
            | ``arr.ndim + 1``  | raise ``AxisError``  |
            +-------------------+----------------------+
-           
+
         .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
 
     Returns
@@ -1466,11 +1461,6 @@ def moveaxis(a, source, destination):
     return result
 
 
-# fix hack in scipy which imports this function
-def _move_axis_to_0(a, axis):
-    return moveaxis(a, axis, 0)
-
-
 def _cross_dispatcher(a, b, axisa=None, axisb=None, axisc=None, axis=None):
     return (a, b)
 
@@ -1560,7 +1550,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     array(-3)
 
     Multiple vector cross-products. Note that the direction of the cross
-    product vector is defined by the `right-hand rule`.
+    product vector is defined by the *right-hand rule*.
 
     >>> x = np.array([[1,2,3], [4,5,6]])
     >>> y = np.array([[4,5,6], [1,2,3]])
@@ -1613,6 +1603,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
         axisc = normalize_axis_index(axisc, len(shape), msg_prefix='axisc')
     dtype = promote_types(a.dtype, b.dtype)
     cp = empty(shape, dtype)
+
+    # recast arrays as dtype
+    a = a.astype(dtype)
+    b = b.astype(dtype)
 
     # create local aliases for readability
     a0 = a[..., 0]
@@ -1779,10 +1773,6 @@ def indices(dimensions, dtype=int, sparse=False):
     return res
 
 
-def _fromfunction_dispatcher(function, shape, *, dtype=None, like=None, **kwargs):
-    return (like,)
-
-
 @set_array_function_like_doc
 @set_module('numpy')
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
@@ -1824,10 +1814,18 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     Notes
     -----
-    Keywords other than `dtype` are passed to `function`.
+    Keywords other than `dtype` and `like` are passed to `function`.
 
     Examples
     --------
+    >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=float)
+    array([[0., 0.],
+           [1., 1.]])
+
+    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)
+    array([[0., 1.],
+           [0., 1.]])
+
     >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
     array([[ True, False, False],
            [False,  True, False],
@@ -1840,15 +1838,14 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     """
     if like is not None:
-        return _fromfunction_with_like(function, shape, dtype=dtype, like=like, **kwargs)
+        return _fromfunction_with_like(
+                like, function, shape, dtype=dtype, **kwargs)
 
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
 
 
-_fromfunction_with_like = array_function_dispatch(
-    _fromfunction_dispatcher
-)(fromfunction)
+_fromfunction_with_like = array_function_dispatch()(fromfunction)
 
 
 def _frombuffer(buf, dtype, shape, order):
@@ -2026,7 +2023,7 @@ def binary_repr(num, width=None):
         binary = bin(num)[2:]
         binwidth = len(binary)
         outwidth = (binwidth if width is None
-                    else max(binwidth, width))
+                    else builtins.max(binwidth, width))
         warn_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
@@ -2046,7 +2043,7 @@ def binary_repr(num, width=None):
             binary = bin(twocomp)[2:]
             binwidth = len(binary)
 
-            outwidth = max(binwidth, width)
+            outwidth = builtins.max(binwidth, width)
             warn_if_insufficient(width, binwidth)
             return '1' * (outwidth - binwidth) + binary
 
@@ -2123,10 +2120,6 @@ def _maketup(descr, val):
         return tuple(res)
 
 
-def _identity_dispatcher(n, dtype=None, *, like=None):
-    return (like,)
-
-
 @set_array_function_like_doc
 @set_module('numpy')
 def identity(n, dtype=None, *, like=None):
@@ -2161,15 +2154,13 @@ def identity(n, dtype=None, *, like=None):
 
     """
     if like is not None:
-        return _identity_with_like(n, dtype=dtype, like=like)
+        return _identity_with_like(like, n, dtype=dtype)
 
     from numpy import eye
     return eye(n, dtype=dtype, like=like)
 
 
-_identity_with_like = array_function_dispatch(
-    _identity_dispatcher
-)(identity)
+_identity_with_like = array_function_dispatch()(identity)
 
 
 def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
@@ -2231,6 +2222,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `equal` but not `array_equal`.
 
     `allclose` is not defined for non-numeric data types.
+    `bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------
@@ -2312,6 +2304,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     for `atol` will result in `False` if either `a` or `b` is zero.
 
     `isclose` is not defined for non-numeric data types.
+    `bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------
@@ -2335,7 +2328,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([False,  True])
     """
     def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'):
+        with errstate(invalid='ignore'), _no_nep50_warning():
             return less_equal(abs(x-y), atol + rtol * abs(y))
 
     x = asanyarray(a)

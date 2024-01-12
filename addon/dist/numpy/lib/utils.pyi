@@ -1,16 +1,10 @@
-import sys
 from ast import AST
+from collections.abc import Callable, Mapping, Sequence
 from typing import (
     Any,
-    Callable,
-    List,
-    Mapping,
-    Optional,
     overload,
-    Sequence,
-    Tuple,
     TypeVar,
-    Union,
+    Protocol,
 )
 
 from numpy import ndarray, generic
@@ -21,29 +15,24 @@ from numpy.core.numerictypes import (
     issubsctype as issubsctype,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
-
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _FuncType = TypeVar("_FuncType", bound=Callable[..., Any])
 
 # A file-like object opened in `w` mode
 class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, __s: _T_contra) -> Any: ...
+    def write(self, s: _T_contra, /) -> Any: ...
 
-__all__: List[str]
+__all__: list[str]
 
 class _Deprecate:
-    old_name: Optional[str]
-    new_name: Optional[str]
-    message: Optional[str]
+    old_name: None | str
+    new_name: None | str
+    message: None | str
     def __init__(
         self,
-        old_name: Optional[str] = ...,
-        new_name: Optional[str] = ...,
-        message: Optional[str] = ...,
+        old_name: None | str = ...,
+        new_name: None | str = ...,
+        message: None | str = ...,
     ) -> None: ...
     # NOTE: `__call__` can in principle take arbitrary `*args` and `**kwargs`,
     # even though they aren't used for anything
@@ -54,46 +43,49 @@ def get_include() -> str: ...
 @overload
 def deprecate(
     *,
-    old_name: Optional[str] = ...,
-    new_name: Optional[str] = ...,
-    message: Optional[str] = ...,
+    old_name: None | str = ...,
+    new_name: None | str = ...,
+    message: None | str = ...,
 ) -> _Deprecate: ...
 @overload
 def deprecate(
-    __func: _FuncType,
-    old_name: Optional[str] = ...,
-    new_name: Optional[str] = ...,
-    message: Optional[str] = ...,
+    func: _FuncType,
+    /,
+    old_name: None | str = ...,
+    new_name: None | str = ...,
+    message: None | str = ...,
 ) -> _FuncType: ...
 
-def deprecate_with_doc(msg: Optional[str]) -> _Deprecate: ...
+def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 
 # NOTE: In practice `byte_bounds` can (potentially) take any object
 # implementing the `__array_interface__` protocol. The caveat is
 # that certain keys, marked as optional in the spec, must be present for
 #  `byte_bounds`. This concerns `"strides"` and `"data"`.
-def byte_bounds(a: Union[generic, ndarray[Any, Any]]) -> Tuple[int, int]: ...
+def byte_bounds(a: generic | ndarray[Any, Any]) -> tuple[int, int]: ...
 
-def who(vardict: Optional[Mapping[str, ndarray[Any, Any]]] = ...) -> None: ...
+def who(vardict: None | Mapping[str, ndarray[Any, Any]] = ...) -> None: ...
 
 def info(
     object: object = ...,
     maxwidth: int = ...,
-    output: Optional[_SupportsWrite[str]] = ...,
+    output: None | _SupportsWrite[str] = ...,
     toplevel: str = ...,
 ) -> None: ...
 
 def source(
     object: object,
-    output: Optional[_SupportsWrite[str]] = ...,
+    output: None | _SupportsWrite[str] = ...,
 ) -> None: ...
 
 def lookfor(
     what: str,
-    module: Union[None, str, Sequence[str]] = ...,
+    module: None | str | Sequence[str] = ...,
     import_modules: bool = ...,
     regenerate: bool = ...,
-    output: Optional[_SupportsWrite[str]] =...,
+    output: None | _SupportsWrite[str] =...,
 ) -> None: ...
 
-def safe_eval(source: Union[str, AST]) -> Any: ...
+def safe_eval(source: str | AST) -> Any: ...
+
+def show_runtime() -> None: ...
