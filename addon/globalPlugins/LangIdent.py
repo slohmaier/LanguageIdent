@@ -206,8 +206,8 @@ class LanguageIdentificationSettings(SettingsPanel):
 
 		#store new checked languages and set in langid
 		try:
-			set_languages(newWhitelist)
 			config.conf['LanguageIdentification']['whitelist'] = ', '.join(newWhitelist)
+			init_factory()
 		except:
 			log.debug('LanguageIdentification: Invalid languages: ' + newWhitelist)
 			config.conf['LanguageIdentification']['whitelist'] = ', '.join(synthLangs.keys())
