@@ -15,7 +15,6 @@ appModules/
 bla
 config/
 gui/
-locale/
 speech/
 utils/
 .vscode
