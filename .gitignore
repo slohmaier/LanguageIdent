@@ -19,3 +19,4 @@ locale/
 speech/
 utils/
 .vscode
+.venv
