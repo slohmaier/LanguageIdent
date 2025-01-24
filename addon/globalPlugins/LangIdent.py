@@ -6,6 +6,7 @@ import config
 import globalPluginHandler
 import gui
 import speech
+import languageHandler
 import wx
 from functools import wraps
 from gui.settingsDialogs import SettingsPanel
@@ -59,11 +60,15 @@ def checkSynth():
 	if curSynthClass != synthClass:
 		synthClass = curSynthClass
 		synthLangs = {}
-		for voiceId in speech.synthDriverHandler.getSynth().availableVoices:
-			voice = speech.synthDriverHandler.getSynth().availableVoices[voiceId]
-			lang = voice.language.split('_')[0]
-			if not lang in synthLangs:
-				synthLangs[lang] = voice.language
+		try:
+			for voiceId in speech.synthDriverHandler.getSynth().availableVoices:
+				voice = speech.synthDriverHandler.getSynth().availableVoices[voiceId]
+				lang = voice.language.split('_')[0]
+				if not lang in synthLangs:
+					synthLangs[lang] = voice.language
+		except NotImplementedError:
+			synthLangs = {languageHandler.getLanguage().split('_')[0]: languageHandler.getLanguage()}
+			
 		log.info('LANGPREDICT:\nFound voices:\n'+
 			'\n'.join(
 				['- {0}: {1}'.format(key, synthLangs[key]) for key in synthLangs]
@@ -126,7 +131,12 @@ def predictLang(langChangeCmd: LangChangeCommand, text: str):
 	log.debug('LanguageIdentification predictLang: '+text)
 	#create new langchangecmd if is none
 	synth = speech.synthDriverHandler.getSynth()
-	defaultLang = synth.availableVoices[synth.voice].language
+	
+	try:
+		defaultLang = synth.availableVoices[synth.voice].language
+	except NotImplementedError:
+		defaultLang = languageHandler.getLanguage()
+
 	if langChangeCmd is None:
 		langChangeCmd = LangChangeCommand(defaultLang)
 	text = text.replace('\n', ' ').replace('\r', ' ') #fasttext doe not like newlines
