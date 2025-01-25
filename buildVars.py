@@ -25,7 +25,7 @@ addon_info = {
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 	"addon_description": _("""This remarkable plugin utilizes an advanced AI model to detect the language of every spoken text and automatically switches the language to match. You have the freedom to select which languages are recognized for language identification, providing ultimate flexibility. Additionally, the plugin disregards any tags and relies solely on the AI model for accurate language detection."""),
 	# version
-	"addon_version": "0.3.1",
+	"addon_version": "0.4.0",
 	# Author(s)
 	"addon_author": "Stefan Lohmaier <stefan@slohmaier.de>",
 	# URL for the add-on documentation support

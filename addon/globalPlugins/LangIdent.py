@@ -24,7 +24,8 @@ addonHandler.initTranslation()
 
 #configuration for settings
 config.conf.spec["LanguageIdentification"] = {
-	'whitelist': 'string(default=\'\')'
+	'whitelist': 'string(default=\'\')',
+	'fallback': 'string(default=\'en,de\')',
 }
 
 #global variables to hold languages and fasttext model
@@ -67,7 +68,9 @@ def checkSynth():
 				if not lang in synthLangs:
 					synthLangs[lang] = voice.language
 		except NotImplementedError:
-			synthLangs = {languageHandler.getLanguage().split('_')[0]: languageHandler.getLanguage()}
+			synthLangs = {}
+			for lang in config.conf['LanguageIdentification'].split(','):
+				synthLangs[lang.strip()] = lang.strip()
 			
 		log.info('LANGPREDICT:\nFound voices:\n'+
 			'\n'.join(
@@ -198,16 +201,29 @@ class LanguageIdentificationSettings(SettingsPanel):
 			checkbox = wx.CheckBox(self, label=lang)
 			sHelper.addItem(checkbox)
 			self._langCheckboxes.append(checkbox)
+		
+		#add seperator
+		sHelper.addItem(wx.StaticLine(self, style=wx.LI_HORIZONTAL))
+
+		#addo label for Fallback languages with with a textedil
+		sHelper.addItem(wx.StaticText(self, label=_('Fallback languages:')))
+		self._fallback = wx.TextCtrl(self)
+		sHelper.addItem(self._fallback)
 
 		self._loadSettings()
 	
 	def _loadSettings(self):
+		self._fallback.SetValue(config.conf['LanguageIdentification']['fallback'])
+
 		#check the checkbox for a language, if in whitelist
 		whitelist =  get_whitelist()
 		for checkbox in self._langCheckboxes:
 			checkbox.SetValue(checkbox.GetLabel() in whitelist)
 
 	def onSave(self):
+		#save fallback
+		config.conf['LanguageIdentification']['fallback'] = self._fallback.GetValue()
+
 		#create list with checked languages
 		newWhitelist = []
 		for checkbox in self._langCheckboxes:
