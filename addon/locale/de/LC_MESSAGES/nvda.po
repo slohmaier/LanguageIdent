@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: LangDetectSpeech 0.6.0\n"
+"Project-Id-Version: LangDetectSpeech 1.0.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-10 10:25+0100\n"
-"PO-Revision-Date: 2026-01-13 13:13+0100\n"
+"POT-Creation-Date: 2026-10-14 12:00+0200\n"
+"PO-Revision-Date: 2026-10-14 12:00+0200\n"
 "Last-Translator: Stefan Lohmaier <stefan@slohmaier.de>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -22,10 +22,10 @@ msgid ""
 "\n"
 "Do you want to enable it now?"
 msgstr ""
-"LangDetectSpeech erfordert, dass \"Automatischer Sprachwechsel\" in den NVDA-"
-"Spracheinstellungen aktiviert ist.\n"
+"LangDetectSpeech erfordert, dass die Option \"Sprache automatisch wechseln\" "
+"in den NVDA-Spracheinstellungen aktiviert ist.\n"
 "\n"
-"Möchten Sie es jetzt aktivieren?"
+"Möchten Sie sie jetzt aktivieren?"
 
 #. Translators: Label for the languages section. {0} is the synthesizer name.
 #: addon\globalPlugins\LangDetectSpeech.py:247
@@ -55,7 +55,7 @@ msgstr ""
 #. to be shown on installation and add-on information found in Add-ons Manager.
 #: buildVars.py:23
 msgid "LangDetectSpeech"
-msgstr "Spracherkennung"
+msgstr "LangDetectSpeech"
 
 #. Add-on description
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
@@ -69,10 +69,20 @@ msgstr ""
 "Eine leichtgewichtige NVDA-Erweiterung, die automatisch die Sprache des "
 "gesprochenen Textes erkennt und zur passenden Synthesizer-Stimme wechselt. "
 "Verwendet fast-langdetect (FastText-basiert) für effiziente Offline-"
-"Spracherkennung in 176 Sprachen."
+"Sprachbestimmung in 176 Sprachen."
 
-#~ msgid "Languages:"
-#~ msgstr "Sprachen:"
-
-#~ msgid "Fallback language:"
-#~ msgstr "Ersatzsprache:"
+#. Add-on changelog
+#. Translators: Changelog shown for this add-on in the add-on store.
+#: buildVars.py:29
+msgid ""
+"1.0.3: Fixed minimum NVDA version (2024.2, required for the speech sequence "
+"filter API), aligned translations with NVDA terminology and added Crowdin "
+"support.\n"
+"1.0.2: Prepared for the NVDA Add-on Store.\n"
+"1.0.0: First release on the add-on store."
+msgstr ""
+"1.0.3: Mindestversion von NVDA korrigiert (2024.2, erforderlich für die API "
+"des Sprachsequenz-Filters), Übersetzungen an die NVDA-Terminologie "
+"angeglichen und Crowdin-Unterstützung hinzugefügt.\n"
+"1.0.2: Für den NVDA-Add-on-Store vorbereitet.\n"
+"1.0.0: Erste Veröffentlichung im Add-on-Store."

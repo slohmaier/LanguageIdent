@@ -1,6 +1,7 @@
 name = {addon_name}
 summary = "{addon_summary}"
 description = """{addon_description}"""
+changelog = """{addon_changelog}"""
 author = "{addon_author}"
 url = {addon_url}
 version = {addon_version}

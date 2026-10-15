@@ -4,11 +4,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: LangDetectSpeech 0.5.0\n"
+"Project-Id-Version: LangDetectSpeech 1.0.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-10 10:25+0100\n"
-"PO-Revision-Date: 2025-01-13 09:00+0100\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2026-10-14 12:00+0200\n"
+"PO-Revision-Date: 2026-10-14 12:00+0200\n"
+"Last-Translator: Stefan Lohmaier <stefan@slohmaier.de>\n"
 "Language-Team: Chinese (Simplified)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -22,7 +22,7 @@ msgid ""
 "\n"
 "Do you want to enable it now?"
 msgstr ""
-"LangDetectSpeech 需要在 NVDA 语音设置中启用「自动语言切换」。\n"
+"LangDetectSpeech 需要在 NVDA 语音设置中启用「自动切换语言」。\n"
 "\n"
 "是否立即启用？"
 
@@ -51,7 +51,7 @@ msgstr ""
 #. to be shown on installation and add-on information found in Add-ons Manager.
 #: buildVars.py:23
 msgid "LangDetectSpeech"
-msgstr "语言检测"
+msgstr "LangDetectSpeech"
 
 #. Add-on description
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
@@ -65,8 +65,17 @@ msgstr ""
 "一个轻量级的 NVDA 插件，可自动检测语音文本的语言并切换到相应的合成器语音。使"
 "用 fast-langdetect（基于 FastText）在 176 种语言中进行高效的离线语言检测。"
 
-#~ msgid "Languages:"
-#~ msgstr "语言："
-
-#~ msgid "Fallback language:"
-#~ msgstr "备用语言："
+#. Add-on changelog
+#. Translators: Changelog shown for this add-on in the add-on store.
+#: buildVars.py:29
+msgid ""
+"1.0.3: Fixed minimum NVDA version (2024.2, required for the speech sequence "
+"filter API), aligned translations with NVDA terminology and added Crowdin "
+"support.\n"
+"1.0.2: Prepared for the NVDA Add-on Store.\n"
+"1.0.0: First release on the add-on store."
+msgstr ""
+"1.0.3：修正了最低 NVDA 版本（2024.2，语音序列过滤器 API 所需），使翻译与 NVDA "
+"术语保持一致，并添加了对 Crowdin 的支持。\n"
+"1.0.2：为 NVDA 插件商店做好准备。\n"
+"1.0.0：插件商店首个版本。"

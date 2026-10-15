@@ -24,8 +24,13 @@ addon_info = {
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 	"addon_description": _("""A lightweight NVDA addon that automatically detects the language of spoken text and switches to the appropriate synthesizer voice. Uses fast-langdetect (FastText-based) for efficient offline language detection across 176 languages."""),
+	# Add-on changelog
+	# Translators: Changelog shown for this add-on in the add-on store.
+	"addon_changelog": _("""1.0.3: Fixed minimum NVDA version (2024.2, required for the speech sequence filter API), aligned translations with NVDA terminology and added Crowdin support.
+1.0.2: Prepared for the NVDA Add-on Store.
+1.0.0: First release on the add-on store."""),
 	# version
-	"addon_version": "1.0.2",
+	"addon_version": "1.0.3",
 	# Author(s)
 	"addon_author": "Stefan Lohmaier <stefan@slohmaier.de>",
 	# URL for the add-on documentation support
@@ -33,11 +38,12 @@ addon_info = {
 	# Documentation file name
 	"addon_docFileName": "readme.html",
 	# Minimum NVDA version supported (e.g. "2018.3.0", minor version is optional)
-	# NVDA 2024.1 was the first release on Python 3.11, which our bundled
-	# fasttext_pybind.cp311-*.pyd requires.
-	"addon_minimumNVDAVersion": "2024.1.0",
+	# NVDA 2024.2 is required for the speech.extensions.filter_speechSequence
+	# extension point used by this add-on, and it still runs on Python 3.11,
+	# which the bundled fasttext_pybind.cp311-*.pyd requires.
+	"addon_minimumNVDAVersion": "2024.2.0",
 	# Last NVDA version supported/tested (e.g. "2018.4.0", ideally more recent than minimum version)
-	"addon_lastTestedNVDAVersion": '2026.1',
+	"addon_lastTestedNVDAVersion": '2026.2',
 	# Add-on update channel (default is None, denoting stable releases,
 	# and for development releases, use "dev".)
 	# Do not change unless you know what you are doing!
