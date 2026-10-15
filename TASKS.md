@@ -13,10 +13,11 @@
 - Added Crowdin integration (`.github/workflows/crowdinL10n.yml` and
   `.github/scripts/`) plus `pyproject.toml` and `.python-version`.
 - Updated `CLAUDE.md` and `readme.md` to match the current architecture.
+- Published the 1.0.3 release (tag `v1.0.3` with the `LangDetectSpeech-1.0.3.nvda-addon`
+  asset).
 
 ## Running
 
-- Cut the 1.0.3 release (tag, GitHub release with the `.nvda-addon` asset).
 - Submit 1.0.3 to the NVDA Add-on Store (addon-datastore registration form, channel
   stable, licence GPL v2). Watch the validation PR.
 
